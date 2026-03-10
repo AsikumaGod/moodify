@@ -1,0 +1,91 @@
+/*
+ * MoodQuote.css
+ * Styles for the random quote banner displayed between the mood grid
+ * and the song list whenever a mood is selected.
+ */
+
+/* ── Container ────────────────────────────────────────────────────────── */
+.mood-quote {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  min-height: 60px; /* Prevents layout shift between loading and loaded states */
+
+  /* Start invisible — faded in by the --visible modifier class */
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Triggered from JS after the quote data arrives */
+.mood-quote--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Loading dots ─────────────────────────────────────────────────────── */
+.mood-quote-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+/* Each dot bounces up and down with a staggered delay for a wave effect */
+.mood-quote-loading span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: quoteDot 1s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+.mood-quote-loading span:nth-child(1) { animation-delay: 0s;    }
+.mood-quote-loading span:nth-child(2) { animation-delay: 0.18s; }
+.mood-quote-loading span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes quoteDot {
+  0%, 100% { transform: translateY(0);    opacity: 0.4; }
+  50%       { transform: translateY(-6px); opacity: 1;   }
+}
+
+/* ── Decorative opening quotation mark ───────────────────────────────── */
+.mood-quote-mark {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  line-height: 1;
+  margin-top: -4px;  /* Optically align the mark with the first line of text */
+  flex-shrink: 0;
+  opacity: 0.85;
+  /* colour set inline from mood.color */
+}
+
+/* ── Quote body ───────────────────────────────────────────────────────── */
+.mood-quote-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* Italic serif for the quote text */
+.mood-quote-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Small-caps muted attribution line */
+.mood-quote-author {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0;
+}

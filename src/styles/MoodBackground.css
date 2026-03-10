@@ -1,0 +1,99 @@
+/*
+ * MoodBackground.css
+ *
+ * Full-viewport layered background that animates with each mood.
+ * Three floating orbs drift slowly and independently across the screen,
+ * creating a living atmosphere unique to each mood.
+ */
+
+/* ── Shared layer setup ───────────────────────────────────────────────── */
+/*
+ * All layers use position:fixed so they cover the entire viewport
+ * and stay in place as the user scrolls through the song list.
+ * pointer-events:none ensures clicks pass through to the content above.
+ */
+.mood-bg,
+.mood-bg-base,
+.mood-bg-orb,
+.mood-bg-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ── Stacking order ───────────────────────────────────────────────────── */
+.mood-bg       { z-index: 0; }  /* Wrapper */
+.mood-bg-base  { z-index: 1; }  /* Dark gradient base */
+.mood-bg-orb   { z-index: 2; }  /* Colour orbs above base */
+.mood-bg-noise { z-index: 3; }  /* Noise grain on top of everything */
+
+/* ── Base gradient layer ──────────────────────────────────────────────── */
+/*
+ * The base gradient sets the overall dark tone for each mood.
+ * background is set inline from JS. Transition animates between moods.
+ */
+.mood-bg-base {
+  transition: background 1.5s ease;
+}
+
+/* ── Colour orbs ──────────────────────────────────────────────────────── */
+/*
+ * Each orb is a large circle blurred into a soft glowing cloud.
+ * width, height, top, left, filter (blur), opacity set inline from JS.
+ * transition animates all colour/opacity/position changes between moods.
+ *
+ * Each orb also has its own slow drift animation so they feel alive
+ * and never perfectly static.
+ */
+.mood-bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  /* Smooth crossfade when switching moods */
+  transition:
+    background 1.5s ease,
+    opacity 1.5s ease,
+    top 1.5s ease,
+    left 1.5s ease;
+  will-change: transform; /* Hint to the browser for GPU compositing */
+}
+
+/* Three distinct drift animations — each orb moves on a different path */
+.mood-bg-orb--1 {
+  animation: orbDrift1 18s ease-in-out infinite alternate;
+}
+.mood-bg-orb--2 {
+  animation: orbDrift2 22s ease-in-out infinite alternate;
+}
+.mood-bg-orb--3 {
+  animation: orbDrift3 15s ease-in-out infinite alternate;
+}
+
+/* Orb 1: drifts diagonally down-right */
+@keyframes orbDrift1 {
+  from { transform: translate(0,   0  ) scale(1);    }
+  to   { transform: translate(6vw, 8vh) scale(1.08); }
+}
+
+/* Orb 2: drifts diagonally up-left */
+@keyframes orbDrift2 {
+  from { transform: translate(0,    0   ) scale(1);    }
+  to   { transform: translate(-8vw, -6vh) scale(0.94); }
+}
+
+/* Orb 3: drifts gently right then down */
+@keyframes orbDrift3 {
+  from { transform: translate(0,   0  ) scale(1);    }
+  to   { transform: translate(5vw, 10vh) scale(1.05); }
+}
+
+/* ── SVG noise overlay ────────────────────────────────────────────────── */
+/*
+ * The SVG stretches to fill the viewport.
+ * Low mix-blend-mode overlay adds grain without washing out the colours.
+ */
+.mood-bg-noise {
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: overlay;
+  opacity: 0.4;
+}
