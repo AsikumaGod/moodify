@@ -22,3 +22,4 @@ yarn-error.log*
 # Editor folders
 .vscode/
 .idea/
+.env
