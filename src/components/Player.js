@@ -1,78 +1,102 @@
+/**
+ * Player.js
+ *
+ * Invisible audio engine for Moodify.
+ * Hosts a hidden 1x1px YouTube IFrame player.
+ * Controlled via the YouTube IFrame API.
+ */
+
 import { useEffect, useRef } from 'react';
 
-export default function Player({ song, isPlaying, onEnded }) {
-  const playerRef = useRef(null);
-  const containerRef = useRef(null);
-  const readyRef = useRef(false);
+const YT_SCRIPT_URL    = 'https://www.youtube.com/iframe_api';
+const YT_SCRIPT_ID     = 'yt-api-script';
+const YT_PLAYER_DIV_ID = 'yt-inner-player';
+const PLAYER_GLOBAL_KEY = '__moodifyPlayer';
 
-  // Load YouTube IFrame API script once
+export default function Player({ song, isPlaying, onEnded }) {
+  const containerRef = useRef(null);
+  const playerRef    = useRef(null);
+  const isReadyRef   = useRef(false);
+
+  // Store onEnded in a ref so the player effect never needs it as a dependency.
+  // This prevents the player from being destroyed/recreated when the callback changes.
+  const onEndedRef = useRef(onEnded);
   useEffect(() => {
-    if (window.YT || document.getElementById('yt-api-script')) return;
-    const tag = document.createElement('script');
-    tag.id = 'yt-api-script';
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.body.appendChild(tag);
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
+
+  // Inject the YouTube IFrame API script once on mount
+  useEffect(() => {
+    const alreadyLoaded = window.YT || document.getElementById(YT_SCRIPT_ID);
+    if (!alreadyLoaded) {
+      const tag = document.createElement('script');
+      tag.id  = YT_SCRIPT_ID;
+      tag.src = YT_SCRIPT_URL;
+      document.body.appendChild(tag);
+    }
   }, []);
 
-  // Init or reinit player when song changes
+  // Create or recreate the player when the song changes
   useEffect(() => {
     if (!song) return;
 
-    readyRef.current = false;
+    isReadyRef.current = false;
 
-    const init = () => {
-      // Destroy old player
+    const initPlayer = () => {
+      // Destroy old player instance
       if (playerRef.current) {
         try { playerRef.current.destroy(); } catch (_) {}
         playerRef.current = null;
-        window.__moodifyPlayer = null;
+        window[PLAYER_GLOBAL_KEY] = null;
       }
 
-      // Create container div
+      // Recreate the target div YT.Player attaches to
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
         const div = document.createElement('div');
-        div.id = 'yt-inner-player';
+        div.id = YT_PLAYER_DIV_ID;
         containerRef.current.appendChild(div);
       }
 
-      playerRef.current = new window.YT.Player('yt-inner-player', {
+      playerRef.current = new window.YT.Player(YT_PLAYER_DIV_ID, {
         videoId: song.videoId,
         playerVars: { autoplay: 1, controls: 0, playsinline: 1 },
         events: {
-          onReady(e) {
-            readyRef.current = true;
-            window.__moodifyPlayer = e.target;
-            e.target.playVideo();
+          onReady(event) {
+            isReadyRef.current = true;
+            window[PLAYER_GLOBAL_KEY] = event.target;
+            event.target.playVideo();
           },
-          onStateChange(e) {
-            if (e.data === window.YT.PlayerState.ENDED) {
-              onEnded?.();
+          onStateChange(event) {
+            if (event.data === window.YT.PlayerState.ENDED) {
+              // Use ref so this closure always calls the latest onEnded
+              onEndedRef.current?.();
             }
           },
-          onError(e) {
-            console.warn('YT player error:', e.data);
-            onEnded?.(); // skip broken videos
+          onError(event) {
+            console.warn('YouTube player error code:', event.data);
+            onEndedRef.current?.();
           },
         },
       });
     };
 
     if (window.YT?.Player) {
-      init();
+      initPlayer();
     } else {
-      const prev = window.onYouTubeIframeAPIReady;
+      const existingCallback = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
-        prev?.();
-        init();
+        existingCallback?.();
+        initPlayer();
       };
     }
-  }, [song?.videoId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [song?.videoId]); // Intentionally only re-run when video ID changes
 
-  // Play / pause control
+  // Play or pause when isPlaying toggles
   useEffect(() => {
-    const player = window.__moodifyPlayer;
-    if (!player || !readyRef.current) return;
+    const player = window[PLAYER_GLOBAL_KEY];
+    if (!player || !isReadyRef.current) return;
     try {
       isPlaying ? player.playVideo() : player.pauseVideo();
     } catch (_) {}
@@ -81,7 +105,11 @@ export default function Player({ song, isPlaying, onEnded }) {
   return (
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: -1, left: -1, width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+      aria-hidden="true"
+      style={{
+        position: 'fixed', bottom: -1, left: -1,
+        width: 1, height: 1, opacity: 0, pointerEvents: 'none',
+      }}
     />
   );
 }

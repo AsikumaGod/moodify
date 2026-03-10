@@ -118,7 +118,8 @@ export default function App() {
     };
 
     fetchPlaylist();
-  }, [selectedMood]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMood]); // mood is derived from selectedMood — safe to omit
 
   /**
    * Called when the user clicks a mood card.

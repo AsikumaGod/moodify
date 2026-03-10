@@ -11,7 +11,7 @@
  * All transitions between moods animate smoothly over 1.5s via CSS.
  */
 
-import { useEffect, useRef } from 'react';
+
 import '../styles/MoodBackground.css';
 
 /**

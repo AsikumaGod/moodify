@@ -81,7 +81,8 @@ export default function MoodQuote({ mood }) {
     };
 
     fetchQuote();
-  }, [mood?.id]); // Re-fetch on every mood change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mood?.id]); // mood object changes together with mood.id — safe to omit
 
   // Render nothing when no mood is active and nothing is loading
   if (!mood || (!loading && !quote)) return null;
