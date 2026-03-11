@@ -54,6 +54,9 @@ export default function App() {
   // Whether the player is actively playing (true) or paused (false)
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Firefox blocks autoplay — this flag triggers a visible tap-to-play nudge
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+
   // Whether the mood grid is collapsed into the sticky pill strip.
   // Owned here (not in MoodGrid) so pill selection can lock it before re-render.
   const [gridCollapsed, setGridCollapsed] = useState(false);
@@ -279,11 +282,36 @@ export default function App() {
       {/* Creator watermark — fixed bottom-left */}
       <CreatorBadge />
 
+      {/* Firefox autoplay nudge — only shown when Firefox blocks audio */}
+      {autoplayBlocked && (
+        <div
+          style={{
+            position: 'fixed', bottom: '80px', left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(20,20,30,0.95)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: '999px',
+            padding: '10px 22px',
+            color: 'white',
+            fontSize: '13px',
+            fontFamily: "'DM Sans', sans-serif'",
+            letterSpacing: '0.05em',
+            zIndex: 200,
+            backdropFilter: 'blur(12px)',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          🔇 Tap anywhere to enable audio
+        </div>
+      )}
+
       {/* Hidden 1×1px YouTube iframe — drives all audio playback */}
       <Player
         song={currentSong}
         isPlaying={isPlaying}
         onEnded={handleEnded}
+        onBlocked={setAutoplayBlocked}
       />
     </div>
   );

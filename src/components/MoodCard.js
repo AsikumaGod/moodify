@@ -27,8 +27,8 @@ export default function MoodCard({ mood, isSelected, onSelect }) {
     <div
       className={`mood-card ${isSelected ? 'selected' : ''}`}
       style={{
-        // Bold glowing ring in the mood's colour when selected
-        border: isSelected ? `2px solid ${mood.color}` : '2px solid transparent',
+        // Inset box-shadow for the selected ring — never clipped by overflow:hidden
+        boxShadow: isSelected ? `inset 0 0 0 2px ${mood.color}, 0 0 20px ${mood.color}44` : 'none',
         // Multi-layer glow: tight inner ring + wide soft halo
         boxShadow: isSelected
           ? `0 0 0 2px ${mood.color}99, 0 0 24px 4px ${mood.color}66, 0 0 48px 8px ${mood.color}33`

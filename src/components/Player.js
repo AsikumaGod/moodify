@@ -2,21 +2,27 @@
  * Player.js
  *
  * Invisible audio engine for Moodify.
- * Hosts a hidden 1x1px YouTube IFrame player controlled via the YouTube IFrame API.
  *
- * iOS Safari Autoplay Fix:
- *   iOS Safari blocks autoplay unless triggered by a direct user gesture (a tap).
- *   When the playlist loads after a mood click, the song is set in code — which
- *   iOS does not count as a user gesture, so it silently blocks playback.
+ * Cross-browser autoplay strategy:
  *
- *   The fix has two parts:
- *   1. On the FIRST load: skip autoplay in onReady. Instead, wait for the
- *      isPlaying effect to fire, which is triggered by the user's mood tap.
- *   2. In the isPlaying effect: if the player isn't ready yet, store a
- *      "pending play" flag so onReady can honour it once the iframe loads.
+ *   Chrome/Edge — autoplay generally allowed after user interaction with page.
  *
- *   This chains the user's tap → state change → player play command cleanly,
- *   satisfying iOS's requirement that playback originates from a gesture.
+ *   iOS Safari  — playVideo() must be called within the same gesture stack
+ *                 as the user's tap. Fixed via pendingPlayRef in onReady.
+ *
+ *   Firefox     — the strictest of all. Firefox requires the user to have
+ *                 directly interacted with the DOCUMENT (not just the app)
+ *                 before ANY audio can play. It fires error code 5 on every
+ *                 autoplay attempt and also fires onError for videos it can't
+ *                 play due to region/embed restrictions.
+ *
+ *                 Fix:
+ *                   1. Detect Firefox via userAgent.
+ *                   2. On error code 5 in Firefox, do NOT skip — instead set
+ *                      a "blocked" flag and let the UI show a tap-to-play nudge.
+ *                   3. Only skip on codes 100/101/150 (truly unplayable videos).
+ *                   4. A document-level 'click' listener retries playVideo()
+ *                      the moment Firefox grants permission via user gesture.
  */
 
 import { useEffect, useRef } from 'react';
@@ -26,26 +32,33 @@ const YT_SCRIPT_ID      = 'yt-api-script';
 const YT_PLAYER_DIV_ID  = 'yt-inner-player';
 const PLAYER_GLOBAL_KEY = '__moodifyPlayer';
 
-export default function Player({ song, isPlaying, onEnded }) {
+// Error codes that mean a video is genuinely unplayable — always skip these
+const HARD_SKIP_CODES = new Set([100, 101, 150]);
+
+// Detect Firefox once at module load
+const IS_FIREFOX = typeof navigator !== 'undefined' &&
+  navigator.userAgent.toLowerCase().includes('firefox');
+
+export default function Player({ song, isPlaying, onEnded, onBlocked }) {
   const containerRef   = useRef(null);
   const playerRef      = useRef(null);
   const isReadyRef     = useRef(false);
-
-  // Tracks whether play was requested before the player finished loading.
-  // If true, onReady will call playVideo() to honour the deferred request.
   const pendingPlayRef = useRef(false);
 
-  // Store onEnded in a ref so the player effect never needs it as a dependency.
-  // Prevents the player from being destroyed/recreated when the callback identity changes.
-  const onEndedRef = useRef(onEnded);
-  useEffect(() => {
-    onEndedRef.current = onEnded;
-  }, [onEnded]);
+  // Track whether Firefox's autoplay policy is blocking us
+  const blockedRef     = useRef(false);
+
+  // Cleanup handle for the document click listener
+  const clickListenerRef = useRef(null);
+
+  const onEndedRef  = useRef(onEnded);
+  const onBlockedRef = useRef(onBlocked);
+  useEffect(() => { onEndedRef.current  = onEnded;   }, [onEnded]);
+  useEffect(() => { onBlockedRef.current = onBlocked; }, [onBlocked]);
 
   // Inject the YouTube IFrame API script once on mount
   useEffect(() => {
-    const alreadyLoaded = window.YT || document.getElementById(YT_SCRIPT_ID);
-    if (!alreadyLoaded) {
+    if (!window.YT && !document.getElementById(YT_SCRIPT_ID)) {
       const tag = document.createElement('script');
       tag.id  = YT_SCRIPT_ID;
       tag.src = YT_SCRIPT_URL;
@@ -53,28 +66,50 @@ export default function Player({ song, isPlaying, onEnded }) {
     }
   }, []);
 
+  // Helper: attach a one-time document click listener to retry play on Firefox
+  const attachClickRetry = () => {
+    // Remove any existing listener first
+    if (clickListenerRef.current) {
+      document.removeEventListener('click', clickListenerRef.current);
+    }
+
+    const handler = () => {
+      document.removeEventListener('click', clickListenerRef.current);
+      clickListenerRef.current = null;
+      blockedRef.current = false;
+      onBlockedRef.current?.(false); // Tell UI to hide the nudge
+
+      const player = window[PLAYER_GLOBAL_KEY];
+      if (player && isReadyRef.current) {
+        try { player.playVideo(); } catch (_) {}
+      }
+    };
+
+    clickListenerRef.current = handler;
+    document.addEventListener('click', handler, { once: true });
+  };
+
   // Create or recreate the player whenever the song changes
   useEffect(() => {
     if (!song) return;
 
-    // Reset ready state — player is not controllable until onReady fires
-    isReadyRef.current   = false;
-
-    // Carry over the current isPlaying intent as a pending request.
-    // This is the key iOS fix: if isPlaying is already true when the new
-    // player loads, onReady will see pendingPlayRef and call playVideo(),
-    // which at that point is still within the same gesture call stack on iOS.
+    isReadyRef.current    = false;
     pendingPlayRef.current = isPlaying;
+    blockedRef.current    = false;
+
+    // Remove any stale click retry listener from previous song
+    if (clickListenerRef.current) {
+      document.removeEventListener('click', clickListenerRef.current);
+      clickListenerRef.current = null;
+    }
 
     const initPlayer = () => {
-      // Destroy previous player instance cleanly
       if (playerRef.current) {
         try { playerRef.current.destroy(); } catch (_) {}
         playerRef.current = null;
         window[PLAYER_GLOBAL_KEY] = null;
       }
 
-      // Recreate the target div that YT.Player replaces with an iframe
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
         const div = document.createElement('div');
@@ -85,37 +120,62 @@ export default function Player({ song, isPlaying, onEnded }) {
       playerRef.current = new window.YT.Player(YT_PLAYER_DIV_ID, {
         videoId: song.videoId,
         playerVars: {
-          autoplay:    0, // Let our code control play — do NOT rely on autoplay
-          controls:    0, // Hide native YouTube controls (we have our own UI)
-          playsinline: 1, // Prevent fullscreen takeover on iOS
+          autoplay:    0,
+          controls:    0,
+          playsinline: 1,
+          origin:      window.location.origin,
         },
         events: {
-          /**
-           * onReady fires once the iframe is loaded and accepts commands.
-           * If a play was pending (user already tapped), honour it now.
-           * This satisfies iOS's requirement that playVideo() is called
-           * within the same event loop tick as the initiating user gesture.
-           */
           onReady(event) {
             isReadyRef.current = true;
             window[PLAYER_GLOBAL_KEY] = event.target;
 
             if (pendingPlayRef.current) {
-              event.target.playVideo();
+              try {
+                event.target.playVideo();
+              } catch (_) {}
               pendingPlayRef.current = false;
             }
           },
 
-          /** Fires when the video ends — advance to next song */
           onStateChange(event) {
             if (event.data === window.YT.PlayerState.ENDED) {
               onEndedRef.current?.();
             }
           },
 
-          /** Fires on unplayable videos (region locked, removed, etc.) — skip */
           onError(event) {
-            console.warn('YouTube player error code:', event.data);
+            const code = event.data;
+            console.warn('YouTube player error:', code, IS_FIREFOX ? '(Firefox)' : '');
+
+            // Always skip truly unplayable videos (removed, private, embed-blocked)
+            if (HARD_SKIP_CODES.has(code)) {
+              onEndedRef.current?.();
+              return;
+            }
+
+            // Error 5 = HTML5 / autoplay policy blocked
+            if (code === 5) {
+              if (IS_FIREFOX) {
+                // Firefox blocked autoplay — do NOT skip.
+                // Instead signal the UI to show a "tap to play" nudge and
+                // attach a document click listener to retry when user taps.
+                blockedRef.current = true;
+                onBlockedRef.current?.(true);
+                attachClickRetry();
+              } else {
+                // Non-Firefox error 5 — retry once after short delay
+                setTimeout(() => {
+                  try {
+                    const p = window[PLAYER_GLOBAL_KEY];
+                    if (p) p.playVideo();
+                  } catch (_) {}
+                }, 800);
+              }
+              return;
+            }
+
+            // Any other error: skip
             onEndedRef.current?.();
           },
         },
@@ -125,25 +185,25 @@ export default function Player({ song, isPlaying, onEnded }) {
     if (window.YT?.Player) {
       initPlayer();
     } else {
-      // API script not yet loaded — defer until it fires the global callback
       const existingCallback = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
         existingCallback?.();
         initPlayer();
       };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [song?.videoId]); // Only re-run when the video changes, not on isPlaying changes
 
-  /**
-   * Effect: Respond to play/pause toggles after the player is ready.
-   *
-   * If the player isn't ready yet (still loading), store the intent in
-   * pendingPlayRef so onReady can pick it up — this is the iOS fix path.
-   */
+    return () => {
+      if (clickListenerRef.current) {
+        document.removeEventListener('click', clickListenerRef.current);
+        clickListenerRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [song?.videoId]);
+
+  // Respond to play/pause toggles
   useEffect(() => {
     if (!isReadyRef.current) {
-      // Player not ready yet — store intent for onReady to handle
       pendingPlayRef.current = isPlaying;
       return;
     }
@@ -152,25 +212,31 @@ export default function Player({ song, isPlaying, onEnded }) {
     if (!player) return;
 
     try {
-      isPlaying ? player.playVideo() : player.pauseVideo();
-    } catch (_) {
-      // Ignore errors during transient player state changes
-    }
+      if (isPlaying) {
+        player.playVideo();
+        pendingPlayRef.current = false;
+        // If user manually pressed play, that counts as a gesture — clear block
+        if (blockedRef.current) {
+          blockedRef.current = false;
+          onBlockedRef.current?.(false);
+          if (clickListenerRef.current) {
+            document.removeEventListener('click', clickListenerRef.current);
+            clickListenerRef.current = null;
+          }
+        }
+      } else {
+        player.pauseVideo();
+      }
+    } catch (_) {}
   }, [isPlaying]);
 
-  // Invisible 1x1px container — the YouTube iframe lives inside it
   return (
     <div
       ref={containerRef}
       aria-hidden="true"
       style={{
-        position: 'fixed',
-        bottom: -1,
-        left: -1,
-        width: 1,
-        height: 1,
-        opacity: 0,
-        pointerEvents: 'none',
+        position: 'fixed', bottom: -1, left: -1,
+        width: 1, height: 1, opacity: 0, pointerEvents: 'none',
       }}
     />
   );

@@ -27,6 +27,11 @@
   overflow: hidden;
   max-height: 600px;          /* Tall enough to never clip the full grid     */
   margin-bottom: 28px;
+  /* Padding gives card borders and shadows room so overflow:hidden doesn't clip them */
+  padding: 4px 4px 8px 4px;
+  /* Compensate so the grid still aligns with the rest of the content */
+  margin-left: -4px;
+  margin-right: -4px;
   transition:
     max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
     margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
