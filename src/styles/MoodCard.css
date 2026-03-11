@@ -1,42 +1,76 @@
+/*
+ * MoodCard.css
+ * Styles for individual mood selector cards.
+ *
+ * Each card is a stacking context with three visual layers (bottom to top):
+ *   1. .mood-card-img     — background photo
+ *   2. .mood-card-overlay — colour tint gradient
+ *   3. .mood-card-content — emoji and label text
+ *
+ * Hover and selected states are handled purely with CSS class combinators,
+ * keeping transition logic out of JavaScript.
+ */
+
 .mood-card {
-  position: relative;
+  position: relative;      /* Establishes stacking context for absolute children */
   border-radius: 20px;
-  overflow: hidden;
+  overflow: hidden;         /* Clips the image and overlay to the rounded corners */
   cursor: pointer;
   height: 180px;
+  /* Transitions for all interactive property changes */
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.mood-card:hover  { transform: scale(1.03); }
-.mood-card.selected { transform: scale(1.01); }
+/* Slight scale-up on hover for a "lift" effect */
+.mood-card:hover   { transform: scale(1.03); }
 
+/* Selected card: scale up + keep image bright */
+.mood-card.selected { transform: scale(1.03); }
+
+/* Selected card image stays fully bright — not desaturated */
+.mood-card.selected .mood-card-img {
+  filter: brightness(0.75) saturate(1.1);
+}
+
+/* Selected overlay is fully visible */
+.mood-card.selected .mood-card-overlay {
+  opacity: 0.85;
+}
+
+/* ── Layer 1: Background image ────────────────────────────────────────── */
 .mood-card-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Desaturated and dark by default to keep text readable */
   filter: brightness(0.4) saturate(0.5);
   transition: filter 0.5s ease;
 }
 
+/* Brighten and restore colour on hover or when selected */
 .mood-card:hover .mood-card-img,
 .mood-card.selected .mood-card-img {
   filter: brightness(0.7) saturate(1);
 }
 
+/* ── Layer 2: Colour gradient overlay ────────────────────────────────── */
 .mood-card-overlay {
   position: absolute;
   inset: 0;
-  opacity: 0.35;
+  /* background is set inline from JS with the mood's colours */
+  opacity: 0.35; /* Subtle by default */
   transition: opacity 0.4s;
 }
 
+/* Stronger overlay on hover/select to bring out the mood colour */
 .mood-card:hover .mood-card-overlay,
 .mood-card.selected .mood-card-overlay {
   opacity: 1;
 }
 
+/* ── Layer 3: Emoji and label ─────────────────────────────────────────── */
 .mood-card-content {
   position: absolute;
   inset: 0;
@@ -55,5 +89,5 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: white;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); /* Ensures legibility over any image */
 }

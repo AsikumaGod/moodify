@@ -34,7 +34,7 @@ export default function MoodGrid({ moods, selectedMood, onSelect, collapsed, onC
           <MoodCard
             key={mood.id}
             mood={mood}
-            selected={mood.id === selectedMood}
+            isSelected={mood.id === selectedMood}
             onSelect={onSelect}
           />
         ))}
