@@ -14,7 +14,7 @@
  *   User clicks prev/next → handlePrev/Next() → Player switches song
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 import moods from './data/moods';
@@ -53,6 +53,23 @@ export default function App() {
 
   // Whether the player is actively playing (true) or paused (false)
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Whether the mood grid is collapsed into the sticky pill strip.
+  // Owned here (not in MoodGrid) so pill selection can lock it before re-render.
+  const [gridCollapsed, setGridCollapsed] = useState(false);
+
+  // Ref so the scroll listener always reads the latest locked value
+  const gridLockedRef = useRef(false);
+
+  // Collapse the grid on scroll; respect the lock set by pill selection
+  useEffect(() => {
+    const handleScroll = () => {
+      if (gridLockedRef.current) return;
+      setGridCollapsed(window.scrollY > 80);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Resolve the full mood object from the selected ID
   const mood = moods.find((m) => m.id === selectedMood);
@@ -131,6 +148,22 @@ export default function App() {
   };
 
   /**
+   * Called by MoodGrid when the user taps a pill in the sticky strip.
+   * Locks the grid collapsed BEFORE the mood state updates so React's
+   * re-render never sees collapsed=false and the grid never flashes back.
+   */
+  const handleGridCollapse = (value) => {
+    gridLockedRef.current = value;
+    setGridCollapsed(value);
+    // Release the lock after the re-render + fetch have settled
+    if (value) {
+      setTimeout(() => {
+        gridLockedRef.current = false;
+      }, 800);
+    }
+  };
+
+  /**
    * Called when the user clicks a song row.
    * - Same song clicked: toggle play/pause
    * - New song clicked: load it and auto-play
@@ -186,13 +219,16 @@ export default function App() {
           moods={moods}
           selectedMood={selectedMood}
           onSelect={handleMoodSelect}
+          collapsed={gridCollapsed}
+          onCollapse={handleGridCollapse}
         />
 
         {/* Random quote fetched from ZenQuotes on each mood selection */}
         <MoodQuote mood={mood} />
 
-        {/* Song list + now-playing bar — shown after a mood is picked */}
-        {selectedMood && mood && (
+        {/* Song list + now-playing bar — always mounted, hidden until a mood is picked.
+            Keeping it mounted prevents unmount/remount scroll jumps when switching moods. */}
+        {mood && (
           <SongList
             mood={mood}
             songs={songs}

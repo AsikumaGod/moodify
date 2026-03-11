@@ -1,33 +1,34 @@
 /**
  * MoodGrid.js
  *
- * Renders the mood selector. Behaviour:
- *   - At rest (top of page): full 2×2 grid of large cards
- *   - Scrolled down: shrinks into a compact sticky horizontal pill strip
- *     so the user can switch moods without scrolling back to the top
+ * Two visual states:
+ *   - Expanded: full 2×2 card grid (at top of page, before scrolling)
+ *   - Collapsed: compact sticky pill strip (controlled by parent via `collapsed` prop)
+ *
+ * The collapsed state is owned by App.js — NOT by a scroll listener inside
+ * this component. This is the key fix: when a pill is tapped, the parent
+ * locks collapsed=true before React re-renders, so the grid never flashes
+ * back into view regardless of scroll position.
  */
 
-import { useEffect, useState } from 'react';
 import MoodCard from './MoodCard';
 import '../styles/MoodGrid.css';
 
-/** How far the user must scroll (px) before the grid collapses */
-const SCROLL_THRESHOLD = 80;
-
-export default function MoodGrid({ moods, selectedMood, onSelect }) {
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setCollapsed(window.scrollY > SCROLL_THRESHOLD);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+export default function MoodGrid({ moods, selectedMood, onSelect, collapsed, onCollapse }) {
+  /**
+   * Called when a pill button is tapped.
+   * Tells the parent to lock collapsed=true BEFORE firing the mood change,
+   * so the scroll listener in App never gets a chance to expand the grid.
+   */
+  const handlePillSelect = (id) => {
+    onCollapse(true);   // Lock collapsed state in App immediately
+    onSelect(id);       // Trigger playlist fetch
+  };
 
   return (
     <div className={`mood-grid-wrapper ${collapsed ? 'mood-grid-wrapper--sticky' : ''}`}>
-      {/* ── Full 2×2 grid (top of page) ── */}
+
+      {/* ── Full 2×2 grid (shown at top of page) ── */}
       <div className={`mood-grid ${collapsed ? 'mood-grid--hidden' : ''}`}>
         {moods.map((mood) => (
           <MoodCard
@@ -39,7 +40,7 @@ export default function MoodGrid({ moods, selectedMood, onSelect }) {
         ))}
       </div>
 
-      {/* ── Compact pill strip (sticky when scrolled) ── */}
+      {/* ── Compact sticky pill strip (shown when collapsed) ── */}
       <div className={`mood-pills ${collapsed ? 'mood-pills--visible' : ''}`}>
         {moods.map((mood) => (
           <button
@@ -52,7 +53,7 @@ export default function MoodGrid({ moods, selectedMood, onSelect }) {
             } : {
               borderColor: `${mood.color}55`,
             }}
-            onClick={() => onSelect(mood.id)}
+            onClick={() => handlePillSelect(mood.id)}
             aria-pressed={mood.id === selectedMood}
           >
             <span className="mood-pill__emoji">{mood.emoji}</span>
@@ -60,6 +61,7 @@ export default function MoodGrid({ moods, selectedMood, onSelect }) {
           </button>
         ))}
       </div>
+
     </div>
   );
 }
