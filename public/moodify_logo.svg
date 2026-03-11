@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Warm pastel radial background matching the original -->
+    <radialGradient id="bgGrad" cx="50%" cy="38%" r="72%">
+      <stop offset="0%"   stop-color="#f7d9b5"/>
+      <stop offset="35%"  stop-color="#ccdce8"/>
+      <stop offset="75%"  stop-color="#bfb8d8"/>
+      <stop offset="100%" stop-color="#a8a0c8"/>
+    </radialGradient>
+
+    <!-- Headphone arc gradient: warm orange → dark teal -->
+    <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#c05828"/>
+      <stop offset="50%"  stop-color="#2a4060"/>
+      <stop offset="100%" stop-color="#1a3050"/>
+    </linearGradient>
+
+    <clipPath id="appClip">
+      <rect width="512" height="512" rx="110" ry="110"/>
+    </clipPath>
+  </defs>
+
+  <!-- App icon rounded square -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+
+  <g clip-path="url(#appClip)">
+
+    <!-- ════════════════════════════════════
+         MOOD COLOUR BLOBS
+         Five overlapping translucent circles
+         representing the spectrum of moods
+         ════════════════════════════════════ -->
+    <circle cx="178" cy="210" r="72" fill="#e8952a" opacity="0.78"/>
+    <circle cx="218" cy="192" r="72" fill="#d43838" opacity="0.72"/>
+    <circle cx="260" cy="190" r="72" fill="#7038b8" opacity="0.70"/>
+    <circle cx="302" cy="192" r="72" fill="#2888cc" opacity="0.70"/>
+    <circle cx="336" cy="212" r="72" fill="#38b858" opacity="0.68"/>
+
+    <!-- ════════════════════════════════════
+         HEADPHONES
+         ════════════════════════════════════ -->
+
+    <!-- Top arc band — gradient warm-to-dark like the original -->
+    <path d="M136,258 Q256,88 376,258"
+          fill="none"
+          stroke="url(#arcGrad)"
+          stroke-width="26"
+          stroke-linecap="round"/>
+
+    <!-- Left ear cup outer -->
+    <rect x="108" y="248" width="56" height="88" rx="22"
+          fill="#252535"/>
+    <!-- Left ear cup inner padding (reddish-purple tint) -->
+    <rect x="118" y="258" width="36" height="68" rx="16"
+          fill="#904060" opacity="0.85"/>
+
+    <!-- Right ear cup outer -->
+    <rect x="348" y="248" width="56" height="88" rx="22"
+          fill="#252535"/>
+    <!-- Right ear cup inner padding (blue tint) -->
+    <rect x="358" y="258" width="36" height="68" rx="16"
+          fill="#285888" opacity="0.85"/>
+
+    <!-- ════════════════════════════════════
+         SOUND WAVE (between the cups)
+         ════════════════════════════════════ -->
+    <path d="M164,302
+             Q182,278 200,302
+             Q218,326 236,290
+             Q254,254 272,290
+             Q290,326 308,302
+             Q326,278 344,302"
+          fill="none"
+          stroke="#252535"
+          stroke-width="7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          opacity="0.88"/>
+
+    <!-- Horizontal staff line connecting the wave -->
+    <line x1="164" y1="302" x2="344" y2="302"
+          stroke="#252535" stroke-width="2" opacity="0.18"/>
+
+    <!-- ════════════════════════════════════
+         MUSIC STAFF LINES (left side)
+         ════════════════════════════════════ -->
+    <line x1="60"  y1="284" x2="130" y2="284" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="60"  y1="296" x2="130" y2="296" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="60"  y1="308" x2="130" y2="308" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="60"  y1="320" x2="130" y2="320" stroke="#252535" stroke-width="3" opacity="0.45"/>
+
+    <!-- Left music note -->
+    <ellipse cx="78" cy="322" rx="10" ry="8"
+             fill="#b04040" opacity="0.85" transform="rotate(-15,78,322)"/>
+    <line x1="88" y1="320" x2="88" y2="278"
+          stroke="#b04040" stroke-width="3.5" opacity="0.85"/>
+    <!-- Note flag -->
+    <path d="M88,278 Q108,286 96,298"
+          fill="none" stroke="#b04040" stroke-width="3" opacity="0.85"/>
+
+    <!-- ════════════════════════════════════
+         MUSIC STAFF LINES (right side)
+         ════════════════════════════════════ -->
+    <line x1="382" y1="284" x2="452" y2="284" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="382" y1="296" x2="452" y2="296" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="382" y1="308" x2="452" y2="308" stroke="#252535" stroke-width="3" opacity="0.45"/>
+    <line x1="382" y1="320" x2="452" y2="320" stroke="#252535" stroke-width="3" opacity="0.45"/>
+
+    <!-- Right music note -->
+    <ellipse cx="434" cy="322" rx="10" ry="8"
+             fill="#2858a0" opacity="0.85" transform="rotate(-15,434,322)"/>
+    <line x1="424" y1="320" x2="424" y2="278"
+          stroke="#2858a0" stroke-width="3.5" opacity="0.85"/>
+    <!-- Note flag -->
+    <path d="M424,278 Q404,286 416,298"
+          fill="none" stroke="#2858a0" stroke-width="3" opacity="0.85"/>
+
+    <!-- ════════════════════════════════════
+         WORDMARK  "moodify"
+         The two o's have music note dots above
+         ════════════════════════════════════ -->
+
+    <!-- Main wordmark -->
+    <text x="256" y="436"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="76"
+          font-weight="400"
+          fill="#252535"
+          text-anchor="middle"
+          letter-spacing="2">moodify</text>
+
+    <!-- Small music note above first 'o' (replaces the dot) -->
+    <ellipse cx="208" cy="390" rx="7" ry="5.5"
+             fill="#252535" opacity="0.8" transform="rotate(-20,208,390)"/>
+    <line x1="215" y1="388" x2="215" y2="370"
+          stroke="#252535" stroke-width="3" opacity="0.8"/>
+
+    <!-- Small music note above second 'o' -->
+    <ellipse cx="244" cy="390" rx="7" ry="5.5"
+             fill="#252535" opacity="0.8" transform="rotate(-20,244,390)"/>
+    <line x1="251" y1="388" x2="251" y2="370"
+          stroke="#252535" stroke-width="3" opacity="0.8"/>
+
+  </g>
+</svg>

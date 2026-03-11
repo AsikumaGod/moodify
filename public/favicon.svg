@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Background gradient matching the image -->
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="70%">
+      <stop offset="0%"   stop-color="#f5d5b0"/>
+      <stop offset="40%"  stop-color="#c8d8e8"/>
+      <stop offset="100%" stop-color="#b0a8cc"/>
+    </radialGradient>
+    <clipPath id="roundedClip">
+      <rect width="100" height="100" rx="22" ry="22"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="22" fill="url(#bgGrad)"/>
+
+  <g clip-path="url(#roundedClip)">
+    <!-- ── Mood colour blobs (overlapping circles) ── -->
+    <circle cx="36" cy="42" r="13" fill="#e8a030" opacity="0.75"/>
+    <circle cx="44" cy="38" r="13" fill="#d94040" opacity="0.70"/>
+    <circle cx="52" cy="38" r="13" fill="#7040b8" opacity="0.68"/>
+    <circle cx="60" cy="38" r="13" fill="#3090d0" opacity="0.68"/>
+    <circle cx="64" cy="44" r="13" fill="#50c060" opacity="0.65"/>
+
+    <!-- ── Headphone arc (top band) ── -->
+    <path d="M28,50 Q50,18 72,50"
+          fill="none" stroke="#2a2a3a" stroke-width="4.5"
+          stroke-linecap="round"/>
+
+    <!-- Left ear cup -->
+    <rect x="22" y="47" width="10" height="16" rx="4"
+          fill="#2a2a3a"/>
+    <!-- Left ear cup inner highlight -->
+    <rect x="24" y="49" width="6" height="12" rx="3"
+          fill="#c05050" opacity="0.8"/>
+
+    <!-- Right ear cup -->
+    <rect x="68" y="47" width="10" height="16" rx="4"
+          fill="#2a2a3a"/>
+    <!-- Right ear cup inner highlight -->
+    <rect x="70" y="49" width="6" height="12" rx="3"
+          fill="#3060a0" opacity="0.8"/>
+
+    <!-- ── Sound wave between cups ── -->
+    <path d="M32,58 Q36,54 40,58 Q44,62 48,55 Q52,48 56,55 Q60,62 64,58 Q68,54 68,58"
+          fill="none" stroke="#2a2a3a" stroke-width="1.4"
+          stroke-linecap="round" opacity="0.85"/>
+
+    <!-- Staff lines -->
+    <line x1="20" y1="56" x2="32" y2="56" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="20" y1="59" x2="32" y2="59" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="20" y1="62" x2="32" y2="62" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="68" y1="56" x2="80" y2="56" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="68" y1="59" x2="80" y2="59" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+    <line x1="68" y1="62" x2="80" y2="62" stroke="#2a2a3a" stroke-width="0.7" opacity="0.5"/>
+
+    <!-- Left music note -->
+    <circle cx="21" cy="62" r="2" fill="#c05050" opacity="0.8"/>
+    <line x1="23" y1="62" x2="23" y2="55" stroke="#c05050" stroke-width="1.2" opacity="0.8"/>
+
+    <!-- Right music note -->
+    <circle cx="79" cy="62" r="2" fill="#3060a0" opacity="0.8"/>
+    <line x1="77" y1="62" x2="77" y2="55" stroke="#3060a0" stroke-width="1.2" opacity="0.8"/>
+
+    <!-- ── "moodify" wordmark ── -->
+    <!-- Two music note 'o's replaced by note circles -->
+    <text x="50" y="84"
+          font-family="Georgia, serif"
+          font-size="13"
+          font-weight="400"
+          fill="#2a2a3a"
+          text-anchor="middle"
+          letter-spacing="0.5">moodify</text>
+  </g>
+</svg>

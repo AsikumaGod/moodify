@@ -22,6 +22,7 @@ import Header from './components/Header';
 import MoodGrid from './components/MoodGrid';
 import MoodQuote from './components/MoodQuote';
 import MoodBackground from './components/MoodBackground';
+import CreatorBadge from './components/CreatorBadge';
 import SongList from './components/SongList';
 import Player from './components/Player';
 
@@ -206,6 +207,9 @@ export default function App() {
           />
         )}
       </div>
+
+      {/* Creator watermark — fixed bottom-left */}
+      <CreatorBadge />
 
       {/* Hidden 1×1px YouTube iframe — drives all audio playback */}
       <Player

@@ -1,0 +1,77 @@
+/*
+ * CreatorBadge.css
+ *
+ * Fixed bottom-left creator watermark.
+ *
+ * Desktop (hover devices): subtle at rest, lifts + brightens on hover.
+ * Mobile (touch devices):  full brightness and lifted by default —
+ *   since there's no hover state on touchscreens.
+ */
+
+.creator-badge {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  text-decoration: none;
+  opacity: 0.45;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* "Made by" text */
+.creator-badge__label {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #555566;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+/* The inline SVG logo */
+.creator-badge__logo {
+  height: 28px;
+  width: auto;
+}
+
+/* ── Desktop: hover interaction ────────────────────────────────────────── */
+/*
+ * Only apply the subtle-by-default + hover-to-reveal behaviour
+ * on devices that support hover (mice, trackpads).
+ * Touch-only devices don't match this media query at all.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .creator-badge:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  .creator-badge:hover .creator-badge__label {
+    color: #00CFFF;
+  }
+}
+
+/* ── Mobile / touch: always visible ───────────────────────────────────── */
+/*
+ * On touch devices (phones, tablets) there is no hover.
+ * Show the badge at full brightness and lifted by default
+ * so it's always legible without needing any interaction.
+ */
+@media (hover: none) {
+  .creator-badge {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  .creator-badge__label {
+    color: #00CFFF;
+  }
+}
