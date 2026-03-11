@@ -1,25 +1,38 @@
 /**
  * MoodQuote.js
  *
- * Displays a random inspirational quote fetched from the ZenQuotes API.
+ * Displays a random inspirational quote fetched from the Quotable API.
  * A fresh quote is pulled every time the user selects a mood.
  *
- * API used: https://zenquotes.io/api/random
+ * API used: https://api.quotable.io/random
  *   - Free, no API key required
- *   - Returns: [{ q: "quote text", a: "author name" }]
+ *   - Has native CORS support — works on all browsers including mobile Safari
+ *   - Returns: { content: "quote text", author: "author name" }
  *
  * Visual states:
  *   - Hidden  : No mood selected yet
  *   - Loading : Animated bouncing dots while fetching
  *   - Visible : Quote fades in once loaded
- *   - Error   : Silently hidden — quote is decorative, not critical
+ *   - Error   : Falls back to a hardcoded quote so something always shows
  */
 
 import { useEffect, useState } from 'react';
 import '../styles/MoodQuote.css';
 
-/** ZenQuotes random quote endpoint */
-const ZENQUOTES_URL = 'https://zenquotes.io/api/random';
+/**
+ * Quotable API endpoint — supports CORS natively, no proxy needed.
+ * Works reliably on desktop and mobile browsers including Safari on iOS.
+ */
+const QUOTABLE_URL = 'https://api.quotable.io/random';
+
+/**
+ * Fallback quote shown if the API call fails (e.g. no internet connection).
+ * Ensures the banner never appears empty.
+ */
+const FALLBACK_QUOTE = {
+  text: 'Music gives a soul to the universe, wings to the mind, and life to everything.',
+  author: 'Plato',
+};
 
 /**
  * MoodQuote component.
@@ -42,57 +55,52 @@ export default function MoodQuote({ mood }) {
    */
   useEffect(() => {
     if (!mood) {
-      // No mood active — clear any previous quote
       setQuote(null);
       setVisible(false);
       return;
     }
 
     const fetchQuote = async () => {
-      // Reset state for the new fetch cycle
       setLoading(true);
       setVisible(false);
       setQuote(null);
 
       try {
-        // ZenQuotes requires a CORS proxy in browser environments
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(ZENQUOTES_URL)}`;
-        const res = await fetch(proxyUrl);
+        // Quotable has native CORS headers — no proxy needed on any device
+        const res = await fetch(QUOTABLE_URL);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
         const data = await res.json();
 
-        // allorigins wraps the response body as a JSON string in data.contents
-        const parsed = JSON.parse(data.contents);
-        const item = parsed[0];
-
         setQuote({
-          text: item.q,   // "q" is the quote text in ZenQuotes' schema
-          author: item.a, // "a" is the author name
+          text:   data.content, // Quotable uses "content" for the quote text
+          author: data.author,  // and "author" for the attribution
         });
-
-        // Short delay before fading in so the transition is noticeable
-        setTimeout(() => setVisible(true), 80);
       } catch (err) {
-        // Fail silently — the quote banner is a nice-to-have, not essential
-        console.warn('MoodQuote fetch failed:', err);
-        setQuote(null);
+        // Fall back to a hardcoded quote so the banner never appears broken
+        console.warn('MoodQuote fetch failed, using fallback:', err);
+        setQuote(FALLBACK_QUOTE);
       } finally {
         setLoading(false);
+        // Short delay so the fade-in transition is noticeable
+        setTimeout(() => setVisible(true), 80);
       }
     };
 
     fetchQuote();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mood?.id]); // mood object changes together with mood.id — safe to omit
+  }, [mood?.id]); // Re-fetch on every mood change
 
-  // Render nothing when no mood is active and nothing is loading
-  if (!mood || (!loading && !quote)) return null;
+  // Render nothing until a mood is selected
+  if (!mood) return null;
 
   return (
     <div
       className={`mood-quote ${visible ? 'mood-quote--visible' : ''}`}
       style={{
         borderLeft: `3px solid ${mood.color}`,
-        background: `${mood.color}0C`,
+        background:  `${mood.color}0C`,
       }}
     >
       {/* ── Loading: three bouncing dots ──────────────────────── */}
