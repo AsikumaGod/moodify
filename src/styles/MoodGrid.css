@@ -1,22 +1,39 @@
 /*
  * MoodGrid.css
  *
- * Two states:
- *   1. Default  — full 2×2 card grid, normal flow
- *   2. Sticky   — compact horizontal pill strip, fixed to top of viewport
+ * Two states with smooth animated transitions between them:
  *
- * The JS component toggles .mood-grid-wrapper--sticky on scroll.
+ *   1. Expanded — full 2×2 card grid in normal page flow
+ *   2. Collapsed — compact sticky pill strip at the top of the viewport
+ *
+ * Transition sequence when collapsing:
+ *   - Grid cards scale down + fade out
+ *   - Wrapper height shrinks to zero (content below slides up smoothly)
+ *   - Pill strip fades + slides in from the top simultaneously
+ *
+ * Transition sequence when expanding (scroll back to top):
+ *   - Pill strip fades + slides back out upward
+ *   - Wrapper height expands back
+ *   - Grid cards scale up + fade in
  */
 
 /* ── Wrapper ────────────────────────────────────────────────────────────── */
+/*
+ * The wrapper animates its max-height to create a smooth collapse effect.
+ * We use max-height instead of height so it works without knowing exact px.
+ * overflow:hidden clips the cards as they shrink.
+ */
 .mood-grid-wrapper {
+  overflow: hidden;
+  max-height: 600px;          /* Tall enough to never clip the full grid     */
   margin-bottom: 28px;
-  transition: margin 0.35s ease;
+  transition:
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* When sticky, the wrapper reserves vertical space so content doesn't jump */
 .mood-grid-wrapper--sticky {
-  /* Height of the pill strip + its padding */
+  max-height: 0;              /* Collapses the wrapper height smoothly        */
   margin-bottom: 0;
 }
 
@@ -25,15 +42,20 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+
+  /* Animate scale + opacity as the wrapper height collapses */
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition:
+    opacity    0.35s ease,
+    transform  0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mood-grid--hidden {
+/* Cards shrink and fade out as the wrapper collapses */
+.mood-grid-wrapper--sticky .mood-grid {
   opacity: 0;
+  transform: scale(0.92) translateY(-12px);
   pointer-events: none;
-  transform: translateY(-8px);
-  position: absolute;   /* Take it out of flow when hidden */
-  visibility: hidden;
 }
 
 /* ── Sticky pill strip ──────────────────────────────────────────────────── */
@@ -49,18 +71,23 @@
   gap: 10px;
   padding: 10px 16px;
 
-  background: rgba(10, 10, 15, 0.82);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 
-  /* Hidden by default — slides in when collapsed */
+  /* Start hidden above the viewport */
   opacity: 0;
   transform: translateY(-100%);
   pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  /* Slightly delayed so it starts sliding in as the grid finishes fading */
+  transition:
+    opacity   0.35s ease 0.1s,
+    transform 0.4s  cubic-bezier(0.4, 0, 0.2, 1) 0.05s;
 }
 
+/* Slide down and fade in */
 .mood-pills--visible {
   opacity: 1;
   transform: translateY(0);
@@ -81,9 +108,13 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.25s ease, border-color 0.25s ease,
-              color 0.25s ease, transform 0.2s ease;
   white-space: nowrap;
+  transition:
+    background    0.25s ease,
+    border-color  0.25s ease,
+    color         0.25s ease,
+    transform     0.2s  ease,
+    box-shadow    0.25s ease;
 }
 
 .mood-pill:hover {
@@ -91,9 +122,17 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Active pill — filled with mood colour, set inline from JS */
 .mood-pill--active {
   font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
+
+/* Stagger each pill's entrance slightly for a ripple effect */
+.mood-pills--visible .mood-pill:nth-child(1) { transition-delay: 0.05s; }
+.mood-pills--visible .mood-pill:nth-child(2) { transition-delay: 0.10s; }
+.mood-pills--visible .mood-pill:nth-child(3) { transition-delay: 0.15s; }
+.mood-pills--visible .mood-pill:nth-child(4) { transition-delay: 0.20s; }
 
 .mood-pill__emoji {
   font-size: 15px;
@@ -105,9 +144,9 @@
   text-transform: capitalize;
 }
 
-/* ── Mobile: smaller pills ──────────────────────────────────────────────── */
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .mood-pills { gap: 8px; padding: 8px 12px; }
   .mood-pill  { padding: 6px 12px; font-size: 12px; }
-  .mood-pill__label { display: none; } /* Emoji only on very small screens */
+  .mood-pill__label { display: none; }
 }
