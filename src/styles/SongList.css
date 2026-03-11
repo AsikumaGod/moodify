@@ -1,14 +1,23 @@
+/*
+ * SongList.css
+ * Styles for the song list panel that appears after selecting a mood.
+ */
+
+/* Frosted-glass panel container */
 .song-list {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 24px;
   padding: 28px;
   backdrop-filter: blur(20px);
   animation: fadeUp 0.5s ease;
+  /* No border — seamlessly matches the quote section width */
+  border: none;
+  /* Full width of the content column, same as MoodQuote */
+  width: 100%;
 }
 
-.song-list-header {
-  margin-bottom: 20px;
-}
+/* Panel header with mood name and song count */
+.song-list-header { margin-bottom: 20px; }
 
 .song-list-label {
   font-size: 11px;
@@ -18,12 +27,14 @@
   margin-bottom: 8px;
 }
 
+/* Short coloured line under the label — colour set inline from mood.color */
 .song-list-bar {
   width: 40px;
   height: 2px;
   border-radius: 2px;
 }
 
+/* Shared styles for loading and error states */
 .song-list-state {
   text-align: center;
   padding: 32px 0;
@@ -37,8 +48,10 @@
   margin-bottom: 10px;
 }
 
+/* Error state uses a red tint to signal a problem */
 .song-list-state.error { color: #ff6b6b; }
 
+/* Vertical stack of song rows with consistent spacing */
 .song-list-items {
   display: flex;
   flex-direction: column;

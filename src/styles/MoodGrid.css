@@ -1,6 +1,113 @@
+/*
+ * MoodGrid.css
+ *
+ * Two states:
+ *   1. Default  — full 2×2 card grid, normal flow
+ *   2. Sticky   — compact horizontal pill strip, fixed to top of viewport
+ *
+ * The JS component toggles .mood-grid-wrapper--sticky on scroll.
+ */
+
+/* ── Wrapper ────────────────────────────────────────────────────────────── */
+.mood-grid-wrapper {
+  margin-bottom: 28px;
+  transition: margin 0.35s ease;
+}
+
+/* When sticky, the wrapper reserves vertical space so content doesn't jump */
+.mood-grid-wrapper--sticky {
+  /* Height of the pill strip + its padding */
+  margin-bottom: 0;
+}
+
+/* ── Full 2×2 grid ──────────────────────────────────────────────────────── */
 .mood-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 40px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.mood-grid--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  position: absolute;   /* Take it out of flow when hidden */
+  visibility: hidden;
+}
+
+/* ── Sticky pill strip ──────────────────────────────────────────────────── */
+.mood-pills {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+
+  background: rgba(10, 10, 15, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  /* Hidden by default — slides in when collapsed */
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.mood-pills--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+/* ── Individual pill button ─────────────────────────────────────────────── */
+.mood-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease,
+              color 0.25s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.mood-pill:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mood-pill--active {
+  font-weight: 700;
+}
+
+.mood-pill__emoji {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.mood-pill__label {
+  letter-spacing: 0.04em;
+  text-transform: capitalize;
+}
+
+/* ── Mobile: smaller pills ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .mood-pills { gap: 8px; padding: 8px 12px; }
+  .mood-pill  { padding: 6px 12px; font-size: 12px; }
+  .mood-pill__label { display: none; } /* Emoji only on very small screens */
 }
