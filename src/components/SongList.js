@@ -44,14 +44,18 @@ export default function SongList({
   onPrev,
 }) {
   return (
-    <div
-      className="song-list"
-      
-    >
+    <div className="song-list">
       {/* ── Panel header ──────────────────────────────────── */}
       <div className="song-list-header">
         <p className="song-list-label">
-          {mood.emoji} {mood.label} playlist — {songs.length} songs
+          {mood.emoji} {mood.label} playlist
+          {/* Show count once we have songs; pulse dots while still loading more */}
+          {songs.length > 0 && (
+            <span className="song-list-count">
+              {songs.length} song{songs.length !== 1 ? 's' : ''}
+              {loading && <span className="song-list-count__loading"> ···</span>}
+            </span>
+          )}
         </p>
         {/* Coloured accent line beneath the label */}
         <div className="song-list-bar" style={{ background: mood.color }} />

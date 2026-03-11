@@ -29,8 +29,8 @@ import Player from './components/Player';
 // YouTube Data API key — stored safely in .env as REACT_APP_YOUTUBE_API_KEY
 const API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
 
-// Maximum number of songs to fetch per playlist
-const MAX_RESULTS = 20;
+// YouTube API returns max 50 items per page — we paginate to get all songs
+const PAGE_SIZE = 50;
 
 // Titles YouTube returns for unavailable videos — we filter these out
 const UNAVAILABLE_TITLES = ['Deleted video', 'Private video'];
@@ -75,67 +75,99 @@ export default function App() {
   const mood = moods.find((m) => m.id === selectedMood);
 
   /**
-   * Fetch songs from YouTube's playlistItems endpoint whenever the mood changes.
-   * Filters out deleted/private videos and normalises each item into a Song shape.
+   * Fetch ALL songs from a YouTube playlist by paginating through every page.
+   *
+   * YouTube's API returns max 50 items per request. We keep following
+   * nextPageToken until there are no more pages, accumulating all results.
+   *
+   * Songs stream in progressively — the list updates after each page so the
+   * user sees songs appearing rather than waiting for everything to finish.
    */
   useEffect(() => {
     if (!selectedMood || !mood) return;
 
-    const fetchPlaylist = async () => {
+    // Abort controller lets us cancel in-flight fetches if mood changes mid-load
+    const controller = new AbortController();
+
+    const fetchAllPages = async () => {
       setLoading(true);
       setError(null);
       setSongs([]);
       setCurrentSong(null);
       setIsPlaying(false);
 
+      let allSongs   = [];
+      let pageToken  = '';
+      let firstPage  = true;
+
       try {
-        const url =
-          `https://www.googleapis.com/youtube/v3/playlistItems` +
-          `?part=snippet` +
-          `&maxResults=${MAX_RESULTS}` +
-          `&playlistId=${mood.playlistId}` +
-          `&key=${API_KEY}`;
+        // Keep fetching pages until YouTube says there are no more
+        do {
+          const url =
+            `https://www.googleapis.com/youtube/v3/playlistItems` +
+            `?part=snippet` +
+            `&maxResults=${PAGE_SIZE}` +
+            `&playlistId=${mood.playlistId}` +
+            `&key=${API_KEY}` +
+            (pageToken ? `&pageToken=${pageToken}` : '');
 
-        const res = await fetch(url);
-        const data = await res.json();
+          const res  = await fetch(url, { signal: controller.signal });
+          const data = await res.json();
 
-        if (data.error) {
-          setError(`API error: ${data.error.message}`);
-          return;
-        }
+          if (data.error) {
+            setError(`API error: ${data.error.message}`);
+            return;
+          }
 
-        const results = data.items
-          .filter(
-            (item) =>
-              !UNAVAILABLE_TITLES.includes(item.snippet.title) &&
-              item.snippet.resourceId?.videoId
-          )
-          .map((item) => ({
-            title: item.snippet.title,
-            artist: item.snippet.videoOwnerChannelTitle || 'Unknown',
-            videoId: item.snippet.resourceId.videoId,
-            thumbnail:
-              item.snippet.thumbnails?.medium?.url ||
-              item.snippet.thumbnails?.default?.url ||
-              '',
-          }));
+          // Normalise this page's items and filter unavailable videos
+          const pageSongs = data.items
+            .filter(
+              (item) =>
+                !UNAVAILABLE_TITLES.includes(item.snippet.title) &&
+                item.snippet.resourceId?.videoId
+            )
+            .map((item) => ({
+              title:     item.snippet.title,
+              artist:    item.snippet.videoOwnerChannelTitle || 'Unknown',
+              videoId:   item.snippet.resourceId.videoId,
+              thumbnail:
+                item.snippet.thumbnails?.medium?.url ||
+                item.snippet.thumbnails?.default?.url ||
+                '',
+            }));
 
-        setSongs(results);
+          allSongs = [...allSongs, ...pageSongs];
 
-        // Auto-play a random song from the playlist as soon as it loads
-        if (results.length > 0) {
-          const randomIndex = Math.floor(Math.random() * results.length);
-          setCurrentSong(results[randomIndex]);
-          setIsPlaying(true);
-        }
+          // Stream results in progressively so the list isn't blank while loading
+          setSongs([...allSongs]);
+
+          // Auto-play a random song from the very first page immediately
+          // so music starts without waiting for all pages to load
+          if (firstPage && allSongs.length > 0) {
+            const randomIndex = Math.floor(Math.random() * allSongs.length);
+            setCurrentSong(allSongs[randomIndex]);
+            setIsPlaying(true);
+            firstPage = false;
+          }
+
+          // Advance to next page (undefined means we are on the last page)
+          pageToken = data.nextPageToken || '';
+
+        } while (pageToken);
+
       } catch (err) {
+        if (err.name === 'AbortError') return; // Mood changed mid-fetch — ignore
         setError('Failed to load playlist. Check your API key in .env');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlaylist();
+    fetchAllPages();
+
+    // Cancel any in-flight requests if the mood changes before they complete
+    return () => controller.abort();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMood]); // mood is derived from selectedMood — safe to omit
 
