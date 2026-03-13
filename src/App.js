@@ -25,7 +25,9 @@ import MoodBackground from './components/MoodBackground';
 import CreatorBadge from './components/CreatorBadge';
 import SongList from './components/SongList';
 import Player from './components/Player';
-import useMediaSession from './hooks/Usemediasession';
+import NowPlaying from './components/NowPlaying';
+import NowPlaying from './components/NowPlaying';
+import useMediaSession from './hooks/useMediaSession';
 
 // YouTube Data API key — stored safely in .env as REACT_APP_YOUTUBE_API_KEY
 const API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
@@ -286,12 +288,23 @@ export default function App() {
             currentSong={currentSong}
             isPlaying={isPlaying}
             onSelect={handleSongSelect}
-            onPlayPause={() => setIsPlaying((p) => !p)}
-            onNext={handleNext}
-            onPrev={handlePrev}
           />
         )}
       </div>
+
+      {/* NowPlaying bar — fixed to bottom of screen, always accessible.
+          Lives here (not inside SongList) so position:fixed is never broken
+          by a parent with backdrop-filter or transform. */}
+      {currentSong && mood && (
+        <NowPlaying
+          song={currentSong}
+          mood={mood}
+          isPlaying={isPlaying}
+          onPlayPause={() => setIsPlaying((p) => !p)}
+          onNext={handleNext}
+          onPrev={handlePrev}
+        />
+      )}
 
       {/* Creator watermark — fixed bottom-left */}
       <CreatorBadge />

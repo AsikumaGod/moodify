@@ -13,7 +13,6 @@
  */
 
 import SongItem from './SongItem';
-import NowPlaying from './NowPlaying';
 import '../styles/SongList.css';
 
 /**
@@ -39,9 +38,6 @@ export default function SongList({
   currentSong,
   isPlaying,
   onSelect,
-  onPlayPause,
-  onNext,
-  onPrev,
 }) {
   return (
     <div className="song-list">
@@ -92,17 +88,7 @@ export default function SongList({
         </div>
       )}
 
-      {/* ── Now Playing bar (shown once a song is selected) ── */}
-      {currentSong && (
-        <NowPlaying
-          song={currentSong}
-          mood={mood}
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onNext={onNext}
-          onPrev={onPrev}
-        />
-      )}
+
     </div>
   );
 }
