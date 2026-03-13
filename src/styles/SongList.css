@@ -3,17 +3,19 @@
  * Styles for the song list panel that appears after selecting a mood.
  */
 
-/* Frosted-glass panel container */
+/* Song list panel container */
 .song-list {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 24px;
   padding: 28px;
-  backdrop-filter: blur(20px);
+  /* NOTE: backdrop-filter removed — it creates a stacking context that
+     traps position:fixed children (NowPlaying bar) and breaks their
+     viewport-relative positioning. */
   animation: fadeUp 0.5s ease;
-  /* No border — seamlessly matches the quote section width */
   border: none;
-  /* Full width of the content column, same as MoodQuote */
   width: 100%;
+  /* Extra bottom padding so the last song isn't hidden behind the fixed player bar */
+  padding-bottom: 100px;
 }
 
 /* Panel header with mood name and song count */
