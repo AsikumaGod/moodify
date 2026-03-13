@@ -10,7 +10,7 @@
 
 .creator-badge {
   position: fixed;
-  bottom: 18px;
+  bottom: calc(90px + env(safe-area-inset-bottom));
   left: 18px;
   z-index: 100;
 
