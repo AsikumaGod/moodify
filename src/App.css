@@ -1,19 +1,39 @@
+/*
+ * App.css
+ *
+ * Global styles and CSS custom properties for Moodify.
+ * All component-specific styles live in src/styles/*.css.
+ * Keyframe animations shared across components are defined here.
+ */
+
+/* ── Google Fonts ──────────────────────────────────────────────────────────
+   Playfair Display : elegant serif used for the main title
+   DM Sans          : clean sans-serif used for all body text
+   ───────────────────────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
+/* ── Reset ─────────────────────────────────────────────────────────────────
+   Normalize box model and remove browser default spacing
+   ───────────────────────────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* ── Design tokens ─────────────────────────────────────────────────────────
+   Centralised colour and spacing values consumed by child components.
+   Mood-specific colours are passed as inline styles from JS.
+   ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --bg: #0a0a0f;
-  --surface: rgba(255, 255, 255, 0.04);
-  --border: rgba(255, 255, 255, 0.07);
-  --text-dim: #555;
-  --text-mid: #999;
+  --bg: #0a0a0f;                        /* App background */
+  --surface: rgba(255, 255, 255, 0.04); /* Frosted-glass card surface */
+  --border: rgba(255, 255, 255, 0.07);  /* Subtle divider colour */
+  --text-dim: #555;                     /* De-emphasised text (labels, artists) */
+  --text-mid: #999;                     /* Mid-tone text (unplayed song titles) */
 }
 
+/* ── Base ──────────────────────────────────────────────────────────────────*/
 body {
   background: var(--bg);
   color: white;
@@ -21,12 +41,16 @@ body {
   min-height: 100vh;
 }
 
+/* ── App shell ─────────────────────────────────────────────────────────────
+   Positioned relatively so the fixed .app-bg sits beneath all content
+   ───────────────────────────────────────────────────────────────────────── */
 .app {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
+/* Full-viewport background layer — transitions its gradient on mood change */
 .app-bg {
   position: fixed;
   inset: 0;
@@ -34,19 +58,27 @@ body {
   transition: background 1.2s ease;
 }
 
+/* Scrollable content layer — sits above .app-bg */
 .app-content {
   position: relative;
   z-index: 1;
   max-width: 860px;
   margin: 0 auto;
-  padding: 40px 24px 120px;
+  /* Extra bottom padding prevents the NowPlaying bar from clipping content */
+  padding: 40px 24px 160px; /* Extra bottom space so songs clear the fixed NowPlaying bar */
 }
 
+/* ── Shared keyframes ──────────────────────────────────────────────────────
+   Referenced by multiple components — defined here to avoid duplication.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Fade up: used by SongList and NowPlaying on mount */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Equaliser bars: three independent bouncing animations for SongItem */
 @keyframes eq1 { from { height: 5px;  } to { height: 18px; } }
 @keyframes eq2 { from { height: 10px; } to { height: 22px; } }
 @keyframes eq3 { from { height: 4px;  } to { height: 15px; } }
