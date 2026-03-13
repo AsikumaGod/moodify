@@ -25,6 +25,7 @@ import MoodBackground from './components/MoodBackground';
 import CreatorBadge from './components/CreatorBadge';
 import SongList from './components/SongList';
 import Player from './components/Player';
+import useMediaSession from './hooks/Usemediasession';
 
 // YouTube Data API key — stored safely in .env as REACT_APP_YOUTUBE_API_KEY
 const API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY;
@@ -233,6 +234,19 @@ export default function App() {
   /** Called by Player when a song ends — auto-advance to next */
   const handleEnded = () => handleNext();
 
+  /**
+   * Media Session API — populates lock screen controls with song info.
+   * Handles play/pause/next/prev from lock screen, AirPods, Bluetooth, car displays.
+   */
+  useMediaSession({
+    song:      currentSong,
+    isPlaying,
+    onPlay:    () => setIsPlaying(true),
+    onPause:   () => setIsPlaying(false),
+    onNext:    handleNext,
+    onPrev:    handlePrev,
+  });
+
   return (
     <div className="app">
 
@@ -294,7 +308,7 @@ export default function App() {
             padding: '10px 22px',
             color: 'white',
             fontSize: '13px',
-            fontFamily: "'DM Sans', sans-serif'",
+            fontFamily: "'DM Sans', sans-serif",
             letterSpacing: '0.05em',
             zIndex: 200,
             backdropFilter: 'blur(12px)',
