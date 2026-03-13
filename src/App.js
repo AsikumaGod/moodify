@@ -26,7 +26,6 @@ import CreatorBadge from './components/CreatorBadge';
 import SongList from './components/SongList';
 import Player from './components/Player';
 import NowPlaying from './components/NowPlaying';
-import NowPlaying from './components/NowPlaying';
 import useMediaSession from './hooks/useMediaSession';
 
 // YouTube Data API key — stored safely in .env as REACT_APP_YOUTUBE_API_KEY
