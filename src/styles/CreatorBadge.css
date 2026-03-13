@@ -10,8 +10,8 @@
 
 .creator-badge {
   position: fixed;
-  bottom: calc(90px + env(safe-area-inset-bottom));
-  left: 18px;
+  top: 18px;
+  left: 16px;
   z-index: 100;
 
   display: flex;
